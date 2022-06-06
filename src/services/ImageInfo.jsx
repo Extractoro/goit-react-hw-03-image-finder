@@ -1,112 +1,148 @@
 // import PropTypes from 'prop-types'
-import { fetchPictures } from './pixabayApi';
+import { fetchPictures } from './PixabayApi';
 import { Component } from 'react';
 import ImageGallery from 'components/ImageGallery';
-import Button from 'components/Button';
-import Modal from 'components/Modal';
+// import Button from 'components/Button';
+// import Modal from 'components/Modal';
 import { toast } from 'react-toastify';
 import { Loading } from 'notiflix/build/notiflix-loading-aio';
+import Button from 'components/Button';
 
 const Status = {
-	IDLE: 'idle',
-	PENDING: 'pending',
-	RESOLVED: 'resolved',
-	REJECTED: 'rejected',
+  IDLE: 'idle',
+  PENDING: 'pending',
+  RESOLVED: 'resolved',
+  REJECTED: 'rejected',
 };
 
 export default class ImageInfo extends Component {
-	static defaultProps = {
-		initialPage: 1,
-	};
+  state = {
+    pictures: [],
+    largeImage: '',
+    tags: '',
+    showModal: false,
+    status: Status.IDLE,
+    totalPages: 0,
+    page: 1,
+  };
 
-	state = {
-		pictures: [],
-		largeImage: '',
-		tags: '',
-		showModal: false,
-		status: Status.IDLE,
-		page: this.props.initialPage,
-	};
+  componentDidUpdate = prevProps => {
+    const prevQuery = prevProps.query;
+    const nextQuery = this.props.query;
 
-	componentWillUpdate(prevProps, prevState) {
-		const prevName = prevProps.quary;
-		const currentName = this.props.quary;
+    if (prevQuery !== nextQuery) {
+      this.setState({ status: Status.PENDING, page: 1 });
+      const page = this.state.page;
 
-		if (prevName !== currentName) {
-			this.setState({ status: Status.PENDING, page: 1 }, () => {
-				const page = this.state.page;
+      fetchPictures(nextQuery, page).then(pics => {
+        if (pics.totalHits !== 0 && pics.hits.length !== 0) {
+          toast.success(`Hooray! We found ${pics.totalHits} images.`);
+        } else {
+          toast.error(
+            'Sorry, there are no images matching your search query. Please try again.'
+          );
+        }
+        this.setState({
+          pictures: [...pics.hits],
+          totalPages: Math.ceil(pics.totalHits / 12),
+          status: Status.RESOLVED,
+        });
+      });
+    }
+  };
 
-				fetchPictures(currentName, page).then(pictures => {
-					if (
-						pictures.data.totalHits !== 0 &&
-						pictures.data.hits.length !== 0
-					) {
-						toast.success(
-							`Hooray! We found ${pictures.data.totalHits} images.`
-						);
-					} else {
-						toast.error(
-							'Sorry, there are no images matching your search query. Please try again.'
-						);
-					}
+  incrementPage = () => {
+    this.setState(prevState => ({
+      page: prevState.page + 1,
+    }));
+    this.setState({ status: Status.PENDING });
+    const page = this.state.page;
+    const nextQuary = this.props.quary;
 
-					this.setState({
-						pictures: [...pictures.hits],
-						status: Status.RESOLVED,
-					});
-				});
-			});
-		}
+    fetchPictures(nextQuary, page)
+      .then(pics => {
+        if (pics.hits.length === 0 && pics.totalHits !== 0) {
+          toast.info(
+            "We're sorry, but you've reached the end of search results."
+          );
+        }
+        this.setState(prevState => ({
+          pictures: [...prevState.pictures, ...pics.hits],
+          status: Status.RESOLVED,
+        }));
+      })
+      .catch(error => {
+        console.log(error);
+        toast.info(
+          "We're sorry, but you've reached the end of search results."
+        );
+      });
+  };
 
-		incrementPage = () => {
-			this.setState(prevState => ({
-				page: prevState.page + 1,
-			})),
-				() => {
-					this.setState({ status: Status.PENDING });
-					const page = this.state.page;
-					const nextQuary = this.props.quary;
+  render() {
+    const { status, pictures } = this.state;
 
-					fetchPictures(nextQuary, page)
-						.then(pics => {
-							if (pics.hits.length === 0 && pics.totalHits !== 0) {
-								toast.info(
-									"We're sorry, but you've reached the end of search results."
-								);
-							}
-							this.setState(prevState => ({
-								pictures: [...prevState.pictures, ...pictures.hits],
-								status: Status.RESOLVED,
-							}));
-						})
-						.catch(
-							toast.info(
-								"We're sorry, but you've reached the end of search results."
-							)
-						);
-				};
-		};
-	}
+    if (status === 'pending') {
+      return (
+        <>
+          {Loading.circle('Loading...')}
+          <ImageGallery pictures={pictures} />
+          {pictures.length !== 0 && (
+            <Button incrementPage={this.incrementPage} />
+          )}
+        </>
+      );
+    }
 
-	render() {
-		const { status, pictures } = this.state;
-
-		if (status === 'pending') {
-			return (
-				<>
-					{Loading.circle('Loading...')}
-					<ImageGallery pictures={pictures} />
-				</>
-			);
-		}
-
-		if (status === 'resolved') {
-			return (
-				<>
-					{Loading.remove}
-					<ImageGallery pictures={pictures} />
-				</>
-			);
-		}
-	}
+    if (status === 'resolved') {
+      return (
+        <>
+          {Loading.remove()}
+          <ImageGallery pictures={pictures} />
+          {pictures.length !== 0 && (
+            <Button incrementPage={this.incrementPage} />
+          )}
+        </>
+      );
+    }
+  }
 }
+
+// import PropTypes from 'prop-types'
+// import { Component } from 'react';
+// import { fetchPictures } from './PixabayApi';
+
+// const Status = {
+//   IDLE: 'idle',
+//   PENDING: 'pending',
+//   RESOLVED: 'resolved',
+//   REJECTED: 'rejected',
+// };
+
+// export default class ImageInfo extends Component {
+//   state = {
+//     pictures: [],
+//     largeImage: '',
+//     tags: '',
+//     showModal: false,
+//     status: Status.IDLE,
+//     page: 1,
+//   };
+
+//   componentDidUpdate = prevProps => {
+//     const { query, page } = this.state;
+//     const prevName = prevProps.query;
+//     const currentName = this.props.query;
+
+//     if (prevName !== currentName) {
+//       console.log(this.props.query);
+//       this.setState({ status: Status.PENDING, query });
+
+//       fetchPictures(query, page).then(pics => console.log(pics));
+//     }
+//   };
+
+//   render() {
+//     return <div>ImageInfo</div>;
+//   }
+// }

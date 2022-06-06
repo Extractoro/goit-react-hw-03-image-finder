@@ -1,36 +1,36 @@
 // import PropTypes from 'prop-types'
-import React, { Component } from 'react'
-import s from './Searchbar.module.css'
-import { BiSearch } from 'react-icons/bi'
+import React, { Component } from 'react';
+import s from './Searchbar.module.css';
+import { BiSearch } from 'react-icons/bi';
 import { toast } from 'react-toastify';
 
 export default class Searchbar extends Component {
   state = {
-    quary: ''
-  }
+    query: '',
+  };
 
   handleNameChange = e => {
-    this.setState({ quary: e.currentTarget.value.toLowerCase() })
-  }
+    this.setState({ query: e.currentTarget.value.toLowerCase() });
+  };
 
   handleSubmit = e => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (this.state.quary.trim() === '') {
-      toast.error('Oops! Entered an empty string')
-      return
+    if (this.state.query.trim() === '') {
+      toast.error('Oops! Entered an empty string');
+      return;
     }
 
-    this.props.onSubmit(this.state.quary)
-    this.setState({ quary: '' })
-  }
+    this.props.onSubmit(this.state.query);
+    this.setState({ query: '' });
+  };
 
   render() {
     return (
       <header className={s['searchbar']}>
         <form className={s['form']} onSubmit={this.handleSubmit}>
           <button type="submit" className={s['button']}>
-            <BiSearch size={25}/>
+            <BiSearch size={25} />
           </button>
 
           <input
@@ -38,12 +38,12 @@ export default class Searchbar extends Component {
             className={s['input']}
             type="text"
             autoComplete="off"
-            value={this.state.quary}
+            value={this.state.query}
             autoFocus
             placeholder="Search images and photos"
-            />
+          />
         </form>
       </header>
-    )
+    );
   }
 }

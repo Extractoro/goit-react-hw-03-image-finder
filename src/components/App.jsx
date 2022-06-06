@@ -3,27 +3,32 @@ import { Container } from 'components/Container';
 import React, { Component } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ImageInfo from 'services/ImageInfo';
 import Searchbar from './Searchbar';
-import ImageGallery from './ImageGallery';
 
 export class App extends Component {
-	state = {
-		quary: null,
-	};
+  state = {
+    query: null,
+  };
 
-	handleFormSubmit = quary => {
-		this.setState({ quary });
-	};
+  handleFormSubmit = query => {
+    this.setState({ query });
+  };
 
-	render() {
-		return (
-			<>
-				<ToastContainer onClose={3000} />
-				<Container>
-					<Searchbar onSubmit={this.handleFormSubmit} />
-					<ImageGallery quary={this.state.quary} />
-				</Container>
-			</>
-		);
-	}
+  render() {
+    const { query } = this.state;
+    return (
+      <>
+        <ToastContainer onClose={3000} />
+        <header>
+          <Searchbar onSubmit={this.handleFormSubmit} />
+        </header>
+        <main>
+          <Container>
+            <ImageInfo query={query} />
+          </Container>
+        </main>
+      </>
+    );
+  }
 }

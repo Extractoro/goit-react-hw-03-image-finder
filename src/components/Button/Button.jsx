@@ -1,10 +1,13 @@
-// import PropTypes from 'prop-types'
-import React, { Component } from 'react'
+import s from './Button.module.css';
+import PropTypes from 'prop-types';
+const ButtonLoadMore = ({ incrementPage }) => (
+  <button className={s['button']} type="button" onClick={incrementPage}>
+    Load more
+  </button>
+);
 
-export default class Button extends Component {
-  render() {
-    return (
-      <div>Button</div>
-    )
-  }
-}
+export default ButtonLoadMore;
+
+ButtonLoadMore.propTypes = {
+  incrementPage: PropTypes.func.isRequired,
+};
