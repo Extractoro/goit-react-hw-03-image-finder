@@ -3,8 +3,10 @@ import React from 'react';
 import s from './ImageGalleryItem.module.css';
 import { FaRegThumbsUp, FaRegEye, FaRegComments } from 'react-icons/fa';
 import { FiDownload } from 'react-icons/fi';
+import { Loading } from 'notiflix';
 
 export const ImageGalleryItem = ({
+  setInfoModal,
   id,
   webformatURL,
   tags,
@@ -14,8 +16,15 @@ export const ImageGalleryItem = ({
   downloads,
   largeImageURL,
 }) => {
+  const handleClick = () => {
+    Loading.pulse({
+      svgSize: '150px',
+    });
+    setInfoModal(largeImageURL, tags);
+    Loading.remove();
+  };
   return (
-    <li className={s['item']}>
+    <li className={s['item']} key={id} onClick={handleClick}>
       <div>
         <div className={s['imgContainer']}>
           <img
