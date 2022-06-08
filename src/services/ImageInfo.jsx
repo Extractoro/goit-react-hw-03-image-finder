@@ -2,8 +2,6 @@
 import { fetchPictures } from './PixabayApi';
 import { Component } from 'react';
 import ImageGallery from 'components/ImageGallery';
-// import Button from 'components/Button';
-// import Modal from 'components/Modal';
 import { toast } from 'react-toastify';
 import { Loading } from 'notiflix/build/notiflix-loading-aio';
 import Button from 'components/Button';
@@ -27,61 +25,71 @@ export default class ImageInfo extends Component {
     page: 1,
   };
 
-  componentDidUpdate = prevProps => {
+  componentDidUpdate(prevProps, prevState) {
     const prevQuery = prevProps.query;
     const nextQuery = this.props.query;
 
     if (prevQuery !== nextQuery) {
-      this.setState({ status: Status.PENDING, page: 1 });
-      const page = this.state.page;
+      this.fetchImages();
+    }
+  }
 
-      fetchPictures(nextQuery, page).then(pics => {
-        if (pics.totalHits !== 0 && pics.hits.length !== 0) {
-          toast.success(`Hooray! We found ${pics.totalHits} images.`);
-        } else {
+  fetchImages = async () => {
+    const page = this.state.page;
+    const nextQuery = this.props.query;
+
+    try {
+      this.setState({ status: Status.PENDING });
+
+      await fetchPictures(nextQuery, page).then(data => {
+        const getData = data.hits;
+        if (getData.length === 0) {
+          this.setState({ status: Status.REJECTED });
           toast.error(
             'Sorry, there are no images matching your search query. Please try again.'
           );
+        } else {
+          this.setState(prevState => ({
+            pictures: [...prevState.pictures, ...getData],
+            totalPages: data.hits.length,
+            status: Status.RESOLVED,
+          }));
         }
-        this.setState({
-          pictures: [...pics.hits],
-          totalPages: Math.ceil(pics.totalHits / 12),
-          status: Status.RESOLVED,
-        });
       });
+    } catch (error) {
+      toast.warn("We're sorry, the search didn't return any results.");
     }
   };
 
+  // componentDidUpdate = prevProps => {
+  //   const prevQuery = prevProps.query;
+  //   const nextQuery = this.props.query;
+
+  //   if (prevQuery !== nextQuery) {
+  //     this.setState({ status: Status.PENDING, page: 1 });
+  //     const page = this.state.page;
+
+  //     fetchPictures(nextQuery, page).then(pics => {
+  //       if (pics.totalHits !== 0 && pics.hits.length !== 0) {
+  //         toast.success(`Hooray! We found ${pics.totalHits} images.`);
+  //       } else {
+  //         toast.error(
+  //           'Sorry, there are no images matching your search query. Please try again.'
+  //         );
+  //       }
+  //       this.setState({
+  //         pictures: [...pics.hits],
+  //         totalPages: pics.hits.length,
+  //         status: Status.RESOLVED,
+  //       });
+  //     });
+  //   }
+  // };
+
   incrementPage = () => {
-    this.setState(
-      prevState => ({
-        page: (prevState.page += 1),
-      }),
-      () => {
-        this.setState({ status: Status.PENDING });
-        const nextQuery = this.props.query;
-
-        const page = this.state.page;
-
-        fetchPictures(nextQuery, page)
-          .then(pictures => {
-            if (pictures.hits.length === 0 && pictures.totalHits !== 0) {
-              toast.info(
-                "We're sorry, but you've reached the end of search results."
-              );
-            }
-            this.setState(prevState => ({
-              pictures: [...prevState.pictures, ...pictures.hits],
-              status: Status.RESOLVED,
-            }));
-          })
-          .catch(() => {
-            toast.info(
-              "We're sorry, but you've reached the end of search results."
-            );
-          });
-      }
-    );
+    const { page } = this.state;
+    this.setState({ page: page + 1 });
+    console.log('dfgdfg');
   };
 
   toggleModal = () => {
@@ -96,15 +104,15 @@ export default class ImageInfo extends Component {
   };
 
   render() {
-    const { status, pictures, showModal, largeImage, tags } = this.state;
-    console.log(largeImage);
+    const { status, pictures, showModal, largeImage, tags, totalPages } =
+      this.state;
 
     if (status === 'pending') {
       return (
         <>
           {Loading.circle('Loading...')}
           <ImageGallery pictures={pictures} setInfoModal={this.setInfoModal} />
-          {pictures.length !== 0 && (
+          {pictures.length !== 0 && totalPages !== 0 && (
             <Button incrementPage={this.incrementPage} />
           )}
         </>
@@ -123,7 +131,7 @@ export default class ImageInfo extends Component {
               tags={tags}
             />
           )}
-          {pictures.length !== 0 && (
+          {pictures.length !== 0 && totalPages !== 0 && (
             <Button incrementPage={this.incrementPage} />
           )}
         </>
